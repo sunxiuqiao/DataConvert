@@ -35,6 +35,10 @@
             this.label2 = new System.Windows.Forms.Label();
             this.ExcelPath = new System.Windows.Forms.TextBox();
             this.ChooseExcelPath = new System.Windows.Forms.Button();
+            this.label3 = new System.Windows.Forms.Label();
+            this.shppath = new System.Windows.Forms.TextBox();
+            this.ChooseshpPath = new System.Windows.Forms.Button();
+            this.ConvertToshp = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -65,11 +69,11 @@
             // 
             // ConverToExcel
             // 
-            this.ConverToExcel.Location = new System.Drawing.Point(362, 126);
+            this.ConverToExcel.Location = new System.Drawing.Point(271, 190);
             this.ConverToExcel.Name = "ConverToExcel";
             this.ConverToExcel.Size = new System.Drawing.Size(75, 23);
             this.ConverToExcel.TabIndex = 3;
-            this.ConverToExcel.Text = "确定";
+            this.ConverToExcel.Text = "导出excel";
             this.ConverToExcel.UseVisualStyleBackColor = true;
             this.ConverToExcel.Click += new System.EventHandler(this.ConverToExcel_Click);
             // 
@@ -99,11 +103,50 @@
             this.ChooseExcelPath.UseVisualStyleBackColor = true;
             this.ChooseExcelPath.Click += new System.EventHandler(this.ChooseExcelPath_Click);
             // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(8, 122);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(107, 12);
+            this.label3.TabIndex = 7;
+            this.label3.Text = "选择导出shp路径：";
+            // 
+            // shppath
+            // 
+            this.shppath.Location = new System.Drawing.Point(110, 113);
+            this.shppath.Name = "shppath";
+            this.shppath.Size = new System.Drawing.Size(225, 21);
+            this.shppath.TabIndex = 8;
+            // 
+            // ChooseshpPath
+            // 
+            this.ChooseshpPath.Location = new System.Drawing.Point(362, 122);
+            this.ChooseshpPath.Name = "ChooseshpPath";
+            this.ChooseshpPath.Size = new System.Drawing.Size(75, 23);
+            this.ChooseshpPath.TabIndex = 9;
+            this.ChooseshpPath.Text = "选择shp路径";
+            this.ChooseshpPath.UseVisualStyleBackColor = true;
+            this.ChooseshpPath.Click += new System.EventHandler(this.ChooseshpPath_Click);
+            // 
+            // ConvertToshp
+            // 
+            this.ConvertToshp.Location = new System.Drawing.Point(362, 190);
+            this.ConvertToshp.Name = "ConvertToshp";
+            this.ConvertToshp.Size = new System.Drawing.Size(75, 23);
+            this.ConvertToshp.TabIndex = 10;
+            this.ConvertToshp.Text = "导出shp";
+            this.ConvertToshp.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(487, 348);
+            this.Controls.Add(this.ConvertToshp);
+            this.Controls.Add(this.ChooseshpPath);
+            this.Controls.Add(this.shppath);
+            this.Controls.Add(this.label3);
             this.Controls.Add(this.ChooseExcelPath);
             this.Controls.Add(this.ExcelPath);
             this.Controls.Add(this.label2);
@@ -127,6 +170,10 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox ExcelPath;
         private System.Windows.Forms.Button ChooseExcelPath;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.TextBox shppath;
+        private System.Windows.Forms.Button ChooseshpPath;
+        private System.Windows.Forms.Button ConvertToshp;
     }
 }
 

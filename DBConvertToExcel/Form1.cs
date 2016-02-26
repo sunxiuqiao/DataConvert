@@ -12,6 +12,19 @@ using Microsoft.Office.Interop.Excel;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using System.Text.RegularExpressions;
+using ESRI.ArcGIS.Carto;
+using ESRI.ArcGIS.Controls;
+using ESRI.ArcGIS.DataSourcesFile;
+using ESRI.ArcGIS.Display;
+using ESRI.ArcGIS.esriSystem;
+using ESRI.ArcGIS.Geodatabase;
+using ESRI.ArcGIS.Geometry;
+using ESRI.ArcGIS.GlobeCore;
+using ESRI.ArcGIS.Output;
+using ESRI.ArcGIS.SystemUI;
+using ESRI.ArcGIS.Geoprocessor;
+using ESRI.ArcGIS.DataSourcesGDB;
+using ESRI.ArcGIS.ConversionTools;
 
 namespace DBConvertToExcel
 {
@@ -22,6 +35,7 @@ namespace DBConvertToExcel
         //string foldPath;
         public Form1()
         {
+            //ESRI.ArcGIS.RuntimeManager.Bind(ESRI.ArcGIS.ProductCode.Engine);
             InitializeComponent();
             
         }
@@ -108,7 +122,7 @@ namespace DBConvertToExcel
         //读入流打开文件（excel）
         private Stream OpenClasspathResource(String fileName)
         {
-            FileStream file = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+            System.IO.FileStream file = new System.IO.FileStream(fileName, FileMode.Open, FileAccess.Read);
             return file;
         }
         #region 属性数据导出excel
@@ -119,7 +133,7 @@ namespace DBConvertToExcel
             //ISheet sheet = string.IsNullOrEmpty(dt.TableName) ? workbook.CreateSheet("居民地") : workbook.CreateSheet(dt.TableName);
             HSSFWorkbook workbook = OpenExistExcel(path);
             ISheet sheet = workbook.GetSheetAt(0);
-            IRow jmdrow = sheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow jmdrow = sheet.CreateRow(0);
             ICell jmdcell = jmdrow.CreateCell(0);
             jmdcell.SetCellValue("ID");
             jmdcell = jmdrow.CreateCell(1);
@@ -164,7 +178,7 @@ namespace DBConvertToExcel
                     MemoryStream ms = new MemoryStream();
                     workbook.Write(ms);
 
-                    using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+                    using (System.IO.FileStream fs = new System.IO.FileStream(path, FileMode.Create, FileAccess.Write))
                     {
                         byte[] bArr = ms.ToArray();
                         fs.Write(bArr, 0, bArr.Length);
@@ -181,7 +195,7 @@ namespace DBConvertToExcel
             ISheet sheet = workbook.GetSheetAt(1);
             //HSSFWorkbook workbook = new HSSFWorkbook();
             //ISheet sheet = string.IsNullOrEmpty(dt.TableName) ? workbook.CreateSheet("道路") : workbook.CreateSheet(dt.TableName);
-            IRow dlrow = sheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow dlrow = sheet.CreateRow(0);
             ICell dlidcell = dlrow.CreateCell(0);
             dlidcell.SetCellValue("ID");
             ICell dllinkidcell = dlrow.CreateCell(1);
@@ -224,7 +238,7 @@ namespace DBConvertToExcel
             }
             MemoryStream ms = new MemoryStream();
             workbook.Write(ms);
-            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            using (System.IO.FileStream fs = new System.IO.FileStream(path, FileMode.Create, FileAccess.Write))
             {
                 byte[] bArray = ms.ToArray();
                 fs.Write(bArray, 0, bArray.Length);
@@ -238,7 +252,7 @@ namespace DBConvertToExcel
             //ISheet sheet = string.IsNullOrEmpty(dt.TableName) ? workbook.CreateSheet("水系") : workbook.CreateSheet(dt.TableName);
             HSSFWorkbook workbook = OpenExistExcel(path);
             ISheet sheet = workbook.GetSheetAt(2);
-            IRow sxrow = sheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow sxrow = sheet.CreateRow(0);
             ICell sxcell = sxrow.CreateCell(0);
             sxcell.SetCellValue("ID");
             sxcell = sxrow.CreateCell(1);
@@ -278,7 +292,7 @@ namespace DBConvertToExcel
 
             MemoryStream ms = new MemoryStream();
             workbook.Write(ms);
-            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            using (System.IO.FileStream fs = new System.IO.FileStream(path, FileMode.Create, FileAccess.Write))
             {
                 byte[] bArray = ms.ToArray();
                 fs.Write(bArray, 0, bArray.Length);
@@ -294,7 +308,7 @@ namespace DBConvertToExcel
             //ISheet sheet = string.IsNullOrEmpty(dt.TableName) ? workbook.CreateSheet("管线") : workbook.CreateSheet(dt.TableName);
             HSSFWorkbook workbook = OpenExistExcel(path);
             ISheet sheet = workbook.GetSheetAt(3);
-            IRow gxrow = sheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow gxrow = sheet.CreateRow(0);
             ICell gxcell = gxrow.CreateCell(0);
             gxcell.SetCellValue("ID");
             gxcell = gxrow.CreateCell(1);
@@ -334,7 +348,14 @@ namespace DBConvertToExcel
                     gxcell = gxrow.CreateCell(6);
                     gxcell.SetCellValue(dataRow["BZ"].ToString());
                 }
-
+            }
+            MemoryStream ms = new MemoryStream();
+            workbook.Write(ms);
+            using (System.IO.FileStream fs = new System.IO.FileStream(path, FileMode.Create, FileAccess.Write))
+            {
+                byte[] bArray = ms.ToArray();
+                fs.Write(bArray, 0, bArray.Length);
+                fs.Flush();
             }
         }
         //植被要素写入excel
@@ -344,7 +365,7 @@ namespace DBConvertToExcel
             //ISheet sheet = string.IsNullOrEmpty(dt.TableName) ? workbook.CreateSheet("植被") : workbook.CreateSheet(dt.TableName);
             HSSFWorkbook workbook = OpenExistExcel(path);
             ISheet sheet = workbook.GetSheetAt(4);
-            IRow zbrow = sheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow zbrow = sheet.CreateRow(0);
             ICell zbcell = zbrow.CreateCell(0);
             zbcell.SetCellValue("ID");
             zbcell = zbrow.CreateCell(1);
@@ -387,7 +408,7 @@ namespace DBConvertToExcel
             }
             MemoryStream ms = new MemoryStream();
             workbook.Write(ms);
-            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            using (System.IO.FileStream fs = new System.IO.FileStream(path, FileMode.Create, FileAccess.Write))
             {
                 byte[] bArray = ms.ToArray();
                 fs.Write(bArray, 0, bArray.Length);
@@ -401,7 +422,7 @@ namespace DBConvertToExcel
             //ISheet sheet = string.IsNullOrEmpty(dt.TableName) ? workbook.CreateSheet("土质地貌") : workbook.CreateSheet(dt.TableName);
             HSSFWorkbook workbook = OpenExistExcel(path);
             ISheet sheet = workbook.GetSheetAt(5);
-            IRow dmrow = sheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow dmrow = sheet.CreateRow(0);
             ICell dmcell = dmrow.CreateCell(0);
             dmcell.SetCellValue("ID");
             dmcell = dmrow.CreateCell(1);
@@ -435,7 +456,7 @@ namespace DBConvertToExcel
 
             MemoryStream ms = new MemoryStream();
             workbook.Write(ms);
-            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            using (System.IO.FileStream fs = new System.IO.FileStream(path, FileMode.Create, FileAccess.Write))
             {
                 byte[] bArray = ms.ToArray();
                 fs.Write(bArray, 0, bArray.Length);
@@ -449,7 +470,7 @@ namespace DBConvertToExcel
             //ISheet sheet = string.IsNullOrEmpty(dt.TableName) ? workbook.CreateSheet("地理注记") : workbook.CreateSheet(dt.TableName);
             HSSFWorkbook workbook = OpenExistExcel(path);
             ISheet sheet = workbook.GetSheetAt(6);
-            IRow dlzjrow = sheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow dlzjrow = sheet.CreateRow(0);
             ICell dlzjcell = dlzjrow.CreateCell(0);
             dlzjcell.SetCellValue("ID");
             dlzjcell = dlzjrow.CreateCell(1);
@@ -488,7 +509,7 @@ namespace DBConvertToExcel
 
             MemoryStream ms = new MemoryStream();
             workbook.Write(ms);
-            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            using (System.IO.FileStream fs = new System.IO.FileStream(path, FileMode.Create, FileAccess.Write))
             {
                 byte[] bArray = ms.ToArray();
                 fs.Write(bArray, 0, bArray.Length);
@@ -502,7 +523,7 @@ namespace DBConvertToExcel
             //ISheet sheet = string.IsNullOrEmpty(dt.TableName) ? workbook.CreateSheet("文字注记") : workbook.CreateSheet(dt.TableName);
             HSSFWorkbook workbook = OpenExistExcel(path);
             ISheet sheet = workbook.GetSheetAt(7);
-            IRow wzzjrow = sheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow wzzjrow = sheet.CreateRow(0);
             ICell wzzjcell = wzzjrow.CreateCell(0);
             wzzjcell.SetCellValue("ID");
             wzzjcell = wzzjrow.CreateCell(1);
@@ -546,7 +567,7 @@ namespace DBConvertToExcel
 
             MemoryStream ms = new MemoryStream();
             workbook.Write(ms);
-            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            using (System.IO.FileStream fs = new System.IO.FileStream(path, FileMode.Create, FileAccess.Write))
             {
                 byte[] bArray = ms.ToArray();
                 fs.Write(bArray, 0, bArray.Length);
@@ -560,7 +581,7 @@ namespace DBConvertToExcel
             //ISheet sheet = string.IsNullOrEmpty(dt.TableName) ? workbook.CreateSheet("境界线") : workbook.CreateSheet(dt.TableName);
             HSSFWorkbook workbook = OpenExistExcel(path);
             ISheet sheet = workbook.GetSheetAt(8);
-            IRow jjxrow = sheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow jjxrow = sheet.CreateRow(0);
             ICell jjxcell = jjxrow.CreateCell(0);
             jjxcell.SetCellValue("ID");
             jjxcell = jjxrow.CreateCell(1);
@@ -604,7 +625,7 @@ namespace DBConvertToExcel
 
             MemoryStream ms = new MemoryStream();
             workbook.Write(ms);
-            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            using (System.IO.FileStream fs = new System.IO.FileStream(path, FileMode.Create, FileAccess.Write))
             {
                 byte[] bArray = ms.ToArray();
                 fs.Write(bArray, 0, bArray.Length);
@@ -636,7 +657,7 @@ namespace DBConvertToExcel
             HSSFSheet WZZJworksheet = (HSSFSheet)workbook.GetSheet("文字注记");
             HSSFSheet JJXworksheet = (HSSFSheet)workbook.GetSheet("境界线");
 
-            IRow jmdrow = JMDworksheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow jmdrow = JMDworksheet.CreateRow(0);
             ICell jmdcell = jmdrow.CreateCell(0);
             jmdcell.SetCellValue("ID");
             jmdcell = jmdrow.CreateCell(1);
@@ -654,7 +675,7 @@ namespace DBConvertToExcel
             jmdcell = jmdrow.CreateCell(7);
             jmdcell.SetCellValue("备注");
 
-            IRow dlrow = DLworksheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow dlrow = DLworksheet.CreateRow(0);
             ICell dlcell = dlrow.CreateCell(0);
             dlcell.SetCellValue("ID");
             dlcell = dlrow.CreateCell(1);
@@ -670,7 +691,7 @@ namespace DBConvertToExcel
             dlcell = dlrow.CreateCell(6);
             dlcell.SetCellValue("备注");
 
-            IRow sxrow = SXworksheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow sxrow = SXworksheet.CreateRow(0);
             ICell sxcell = sxrow.CreateCell(0);
             sxcell.SetCellValue("ID");
             sxcell = sxrow.CreateCell(1);
@@ -684,7 +705,7 @@ namespace DBConvertToExcel
             sxcell = sxrow.CreateCell(5);
             sxcell.SetCellValue("备注");
 
-            IRow zbrow = ZBworksheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow zbrow = ZBworksheet.CreateRow(0);
             ICell zbcell = zbrow.CreateCell(0);
             zbcell.SetCellValue("ID");
             zbcell = zbrow.CreateCell(1);
@@ -700,7 +721,7 @@ namespace DBConvertToExcel
             zbcell = zbrow.CreateCell(6);
             zbcell.SetCellValue("备注");
 
-            IRow gxrow = GXworksheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow gxrow = GXworksheet.CreateRow(0);
             ICell gxcell = gxrow.CreateCell(0);
             gxcell.SetCellValue("ID");
             gxcell = gxrow.CreateCell(1);
@@ -716,7 +737,7 @@ namespace DBConvertToExcel
             gxcell = gxrow.CreateCell(6);
             gxcell.SetCellValue("备注");
 
-            IRow jjxrow = JJXworksheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow jjxrow = JJXworksheet.CreateRow(0);
             ICell jjxcell = jjxrow.CreateCell(0);
             jjxcell.SetCellValue("ID");
             jjxcell = jjxrow.CreateCell(1);
@@ -732,7 +753,7 @@ namespace DBConvertToExcel
             jjxcell = jjxrow.CreateCell(6);
             jjxcell.SetCellValue("备注");
 
-            IRow dmrow = TZDMworksheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow dmrow = TZDMworksheet.CreateRow(0);
             ICell dmcell = dmrow.CreateCell(0);
             dmcell.SetCellValue("ID");
             dmcell = dmrow.CreateCell(1);
@@ -745,7 +766,7 @@ namespace DBConvertToExcel
             dmcell.SetCellValue("备注");
             dmcell = dmrow.CreateCell(5);
 
-            IRow dlzjrow = DLZJworksheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow dlzjrow = DLZJworksheet.CreateRow(0);
             ICell dlzjcell = dlzjrow.CreateCell(0);
             dlzjcell.SetCellValue("ID");
             dlzjcell = dlzjrow.CreateCell(1);
@@ -759,7 +780,7 @@ namespace DBConvertToExcel
             dlzjcell = dlzjrow.CreateCell(5);
             dlzjcell.SetCellValue("备注");
 
-            IRow wzzjrow = WZZJworksheet.CreateRow(0);
+            NPOI.SS.UserModel.IRow wzzjrow = WZZJworksheet.CreateRow(0);
             ICell wzzjcell = wzzjrow.CreateCell(0);
             wzzjcell.SetCellValue("ID");
             wzzjcell = wzzjrow.CreateCell(1);
@@ -777,7 +798,7 @@ namespace DBConvertToExcel
 
             MemoryStream ms = new MemoryStream();
             workbook.Write(ms);
-            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            using (System.IO.FileStream fs = new System.IO.FileStream(path, FileMode.Create, FileAccess.Write))
             {
                 byte[] bArray = ms.ToArray();
                 fs.Write(bArray, 0, bArray.Length);
@@ -1533,7 +1554,92 @@ namespace DBConvertToExcel
 
         #region 空间数据导出为excel
 
-        public void CreatreSHP(System.Data.DataTable dt,string filePath)
+        public void CreateJJMToSHP(System.Data.DataTable dt,string filePath)
+        {
+            
+        }
+
+        public void CreateDLToSHP(System.Data.DataTable dt, string filePath)
+        {
+
+        }
+
+        public void CreateSXToSHP(System.Data.DataTable dt, string filePath)
+        {
+
+        }
+
+        public void CreateZBToSHP(System.Data.DataTable dt, string filePath)
+        {
+
+        }
+
+        public void CreateGXToSHP(System.Data.DataTable dt, string filePath)
+        {
+
+        }
+
+        public void CreateDMToSHP(System.Data.DataTable dt, string filePath)
+        {
+
+        }
+
+        public void CreateDLZJToSHP(System.Data.DataTable dt, string filePath)
+        {
+            IWorkspaceFactory pWorkspaceFactory = new ShapefileWorkspaceFactory();
+            string graphic = "道路";
+            string fileName = System.IO.Path.Combine(filePath, graphic);
+            if (!System.IO.Directory.Exists(fileName))
+            {
+                System.IO.Directory.CreateDirectory(fileName);
+            }
+            IFields fields = new FieldsClass();
+            //IFieldsEdit fieldsEdit = (IFieldsEdit)fields;
+            //IField field = new FieldClass();
+            //IFieldEdit fieldEidt = new FieldClass();
+            try
+            {
+                IFeatureWorkspace pFeatureworkSpace = pWorkspaceFactory.OpenFromFile(fileName, 0) as IFeatureWorkspace;
+                IFeatureClass pFeatureClass = pFeatureworkSpace.CreateFeatureClass(fileName, fields, null, null, esriFeatureType.esriFTSimple, "SHAPE", null);
+               
+                ESRI.ArcGIS.Geometry.IPoint point = new ESRI.ArcGIS.Geometry.PointClass();
+                double pointX, pointY;
+                int rows = dt.Rows.Count;
+                int colums = dt.Columns.Count;
+                for (int i = 1; i < rows; i++)
+                {
+                    DataRow dataRow = dt.Rows[i - 1];
+                    for (int j = 1; j < colums; j++)
+                    {
+                        
+                        pointX = double.Parse(dataRow["x"].ToString());
+                        pointY = double.Parse(dataRow["y"].ToString());
+                        ESRI.ArcGIS.Geometry.IPoint pPoint = new PointClass();
+                        pPoint.PutCoords(pointX, pointY);
+                        IFeature pFeature = pFeatureClass.CreateFeature();
+                        pFeature.Shape = pPoint;
+                        CreateSimpleSymbol(esriGeometryType.esriGeometryPoint);
+                        
+                    }
+                }
+            }
+            catch (Exception err)
+            {
+                MessageBox.Show("创建shp文件错误！", err.ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                MessageBox.Show("导出成功！");
+            }
+            
+        }
+
+        public void CreateWZZJToSHP(System.Data.DataTable dt, string filePath)
+        {
+
+        }
+
+        public void CreateJJXToSHP(System.Data.DataTable dt, string filePath)
         {
 
         }
@@ -1553,5 +1659,168 @@ namespace DBConvertToExcel
             }
             ExcelPath.Text = saveFilePath;
         }
+        //选择保存的shp文件路径
+        private void ChooseshpPath_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Title = "保存文件";
+            saveFileDialog.Filter = "SHP文件(.shp)|*.shp|所有文件(*.*)|*.*";
+            saveFileDialog.RestoreDirectory = true;
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                saveFilePath = saveFileDialog.FileName;
+            }
+            shppath.Text = saveFilePath;
+        }
+
+        public static void createwhatShapefile(esriGeometryType type, IMap map, string filePath, string fileName)
+        {
+            //建立shape字段
+            IFields pFields = new FieldsClass();
+            IFieldsEdit pFieldsEdit = pFields as IFieldsEdit;
+            IField pField = new FieldClass();
+            IFieldEdit pFieldEdit = pField as IFieldEdit;
+            pFieldEdit.Name_2 = "Shape";
+            pFieldEdit.Type_2 = esriFieldType.esriFieldTypeGeometry;
+
+            //设置geometry definition
+            IGeometryDef pGeometryDef = new GeometryDefClass();
+            IGeometryDefEdit pGeometryDefEdit = pGeometryDef as IGeometryDefEdit;
+            pGeometryDefEdit.GeometryType_2 = type;
+            pGeometryDefEdit.SpatialReference_2 = map.SpatialReference;
+            pFieldEdit.GeometryDef_2 = pGeometryDef;
+            pFieldsEdit.AddField(pField);
+
+            //新建字段
+            pField = new FieldClass();
+            pFieldEdit = pField as IFieldEdit;
+            pFieldEdit.Length_2 = 10;
+            pFieldEdit.Name_2 = "OBJECTID";
+            pFieldEdit.AliasName_2 = "ID";
+            pFieldEdit.Type_2 = esriFieldType.esriFieldTypeDouble;
+            pFieldsEdit.AddField(pField);
+            //其他字段用循环新建
+
+
+            IWorkspaceFactory pWorkspaceFactory = new ShapefileWorkspaceFactory();
+            IWorkspace pWorkspace = pWorkspaceFactory.OpenFromFile(filePath, 0);
+            IFeatureWorkspace pFeatureWorkspace = pWorkspace as IFeatureWorkspace;
+            //IWorkspaceFactory pWorkspaceFactory = new FileGDBWorkspaceFactoryClass();
+            //IFeatureWorkspace pFeatureWorkspace = pWorkspaceFactory.OpenFromFile(filePath, 0) as IFeatureWorkspace;
+
+            int i = fileName.IndexOf(".shp");
+            if (i == -1)
+                pFeatureWorkspace.CreateFeatureClass(fileName + ".shp", pFields, null, null, esriFeatureType.esriFTSimple, "Shape", "");
+            else
+                pFeatureWorkspace.CreateFeatureClass(fileName, pFields, null, null, esriFeatureType.esriFTSimple, "Shape", "");
+
+            //MessageBox.Show("OK");4 
+        }
+        #region 符号设计
+        private ISymbol CreateSimpleSymbol(esriGeometryType geometryType)
+        {
+            ISymbol symbol = null;
+            switch (geometryType)
+            {
+                case esriGeometryType.esriGeometryPoint:
+                case esriGeometryType.esriGeometryMultipoint:
+                    ISimpleMarkerSymbol markerSymbol = new SimpleMarkerSymbolClass();
+                    markerSymbol.Color = getRGB(0, 0, 255);
+                    markerSymbol.Size = 10;
+                    symbol = markerSymbol as ISymbol;
+                    break;
+                case esriGeometryType.esriGeometryPolyline:
+                case esriGeometryType.esriGeometryPath:
+                    ISimpleLineSymbol lineSymbol = new SimpleLineSymbolClass();
+                    lineSymbol.Color = getRGB(0, 0, 255);
+                    lineSymbol.Width = 10;
+                    symbol = lineSymbol as ISymbol;
+                    break;
+                case esriGeometryType.esriGeometryPolygon:
+                case esriGeometryType.esriGeometryRing:
+                    ISimpleFillSymbol fillSymbol = new SimpleFillSymbolClass();
+                    fillSymbol.Color = getRGB(0, 0, 255);
+                    symbol = fillSymbol as ISymbol;
+                    break;
+            }
+            symbol.ROP2 = esriRasterOpCode.esriROPNotXOrPen;
+            return symbol;
+        }
+        #endregion
+       
+        #region 颜色
+        private ESRI.ArcGIS.Display.IColor getRGB(int i, int j, int k)
+        {
+            IRgbColor rgb = new RgbColorClass();
+            rgb.Red = i;
+            rgb.Green = j;
+            rgb.Blue = k;
+            return rgb;
+        }
+        #endregion
+        
+        #region 创建shp文件
+        public void CreateSHP(IFeatureClass pInFeatureClass, string pPath)
+        {
+            // create a new Access workspace factory        
+            IWorkspaceFactory pWorkspaceFactory = new ShapefileWorkspaceFactoryClass();
+            string parentPath = pPath.Substring(0, pPath.LastIndexOf('\\'));
+            string fileName = pPath.Substring(pPath.LastIndexOf('\\') + 1, pPath.Length - pPath.LastIndexOf('\\') - 1);
+            IWorkspaceName pWorkspaceName = pWorkspaceFactory.Create(parentPath, fileName, null, 0);
+            // Cast for IName        
+            ESRI.ArcGIS.esriSystem.IName name = (ESRI.ArcGIS.esriSystem.IName)pWorkspaceName;
+            //Open a reference to the access workspace through the name object        
+            IWorkspace pOutWorkspace = (IWorkspace)name.Open();
+
+            IDataset pInDataset = pInFeatureClass as IDataset;
+            IFeatureClassName pInFCName = pInDataset.FullName as IFeatureClassName;
+            IWorkspace pInWorkspace = pInDataset.Workspace;
+            IDataset pOutDataset = pOutWorkspace as IDataset;
+            IWorkspaceName pOutWorkspaceName = pOutDataset.FullName as IWorkspaceName;
+            IFeatureClassName pOutFCName = new FeatureClassNameClass();
+            IDatasetName pDatasetName = pOutFCName as IDatasetName;
+            pDatasetName.WorkspaceName = pOutWorkspaceName;
+            pDatasetName.Name = pInFeatureClass.AliasName;
+            IFieldChecker pFieldChecker = new FieldCheckerClass();
+            pFieldChecker.InputWorkspace = pInWorkspace;
+            pFieldChecker.ValidateWorkspace = pOutWorkspace;
+            IFields pFields = pInFeatureClass.Fields;
+            IFields pOutFields;
+            IEnumFieldError pEnumFieldError;
+            pFieldChecker.Validate(pFields, out pEnumFieldError, out pOutFields);
+
+            IFeatureDataConverter pFeatureDataConverter = new FeatureDataConverterClass();
+            pFeatureDataConverter.ConvertFeatureClass(pInFCName, null, null, pOutFCName, null, pOutFields, "", 1000, 0);
+        }
+        #endregion
+
+        #region 创建点要素
+        int index;
+        IFeatureClass pFeatureClass;
+        public IFeatureLayer CreatePointShape(string saveshpPath)
+        {
+            int index = saveshpPath.LastIndexOf('\\');
+            string shapeName = saveshpPath.Substring(index + 1);
+            string shapeFolder = saveshpPath.Substring(0, index);
+            IWorkspaceFactory pWorkspaceFactory = new ShapefileWorkspaceFactoryClass();
+            IFeatureWorkspace pFeatureworkspace = (IFeatureWorkspace)pWorkspaceFactory.OpenFromFile(shapeFolder, 0);
+            if (File.Exists(saveshpPath))
+            {
+                IFeatureClass featureClass = pFeatureworkspace.OpenFeatureClass(shapeName);
+                IDataset pDataset = (IDataset)featureClass;
+                pDataset.Delete();
+            }
+            //创建点要素图层
+            IGeometryDef pGeometryDef = new GeometryDefClass();
+            IGeometryDefEdit pGeometryDefEdit = (IGeometryDefEdit)pGeometryDef;
+            pGeometryDefEdit.GeometryType_2 = esriGeometryType.esriGeometryPoint;
+            //创建地理坐标系对象
+            ISpatialReferenceFactory spatialRerenceFactery = new SpatialReferenceEnvironmentClass();
+            ISpatialReference spatialRenferece = spatialRerenceFactery.CreateGeographicCoordinateSystem((int)esriSRGeoCSType.esriSRGeoCS_WGS1984);
+            pGeometryDefEdit.SpatialReference_2 = spatialRenferece;
+            
+
+        }
+        #endregion
     }
 }
