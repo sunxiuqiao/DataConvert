@@ -32,12 +32,14 @@ namespace DBConvertToExcel
     {
         string saveFilePath;
         string openFilePath;
+        string saveshpPath;
+        string openSpatialPath;
         //string foldPath;
         public Form1()
         {
-            //ESRI.ArcGIS.RuntimeManager.Bind(ESRI.ArcGIS.ProductCode.Engine);
+           
             InitializeComponent();
-            
+
         }
         //属性数据转换为excel表格
         private void ConverToExcel_Click(object sender, EventArgs e)
@@ -98,6 +100,48 @@ namespace DBConvertToExcel
             }
             MessageBox.Show("导出成功！");
         }
+        //空间数据转换为shp文件
+        private void ConvertToshp_Click(object sender, EventArgs e)
+        {
+            string sqlstr = @"select * from [JMDData]";
+            //DataSet jjdds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
+
+            //sqlstr = @"select * from [DLData]";
+            //DataSet dlds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
+
+            //sqlstr = @"select * from [SXData]";
+            //DataSet sxds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
+
+            //sqlstr = @"select * from [GXData]";
+            //DataSet gxds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
+
+            //sqlstr = @"select * from [ZBData]";
+            //DataSet zbds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
+
+            //sqlstr = @"select * from [JJXData]";
+            //DataSet jjxds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
+
+            //sqlstr = @"select * from [DMData]";
+            //DataSet dmds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
+
+            //sqlstr = @"select * from [ZJData]";
+            //DataSet zjds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
+
+            //sqlstr = @"select * from [PZJData]";
+            //DataSet dlzjds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
+
+            //sqlstr = @"select * from [GPSData]";
+            //DataSet gpsds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
+
+            sqlstr = @"select * from [WZBZData]";
+            DataSet wzzjds = SqliteHelper.ExcelDataSet(sqlstr, openSpatialPath);
+            if (saveshpPath != null)
+            {
+                CreatePointShape(wzzjds.Tables[0], openSpatialPath);
+            }
+            MessageBox.Show("导出成功！");
+        }
+        #region 选择db路径
         //选择db文件
         private void ChoosePath_Click(object sender, EventArgs e)
         {
@@ -111,6 +155,21 @@ namespace DBConvertToExcel
             }
             AttributePath.Text = openFilePath;
         }
+        //选择空间数据路径
+        private void ChooseSpatialPath_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Title = "打开文件";
+            openFileDialog.Filter = "DB文件（*.db)|*db";
+            openFileDialog.RestoreDirectory = true;
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                openSpatialPath = openFileDialog.FileName;
+            }
+            spatialdbPath.Text = openSpatialPath;
+        }
+        #endregion
+       
         //打开存在的excel表（刚刚创建的）
         public HSSFWorkbook OpenExistExcel(string filePath)
         {
@@ -125,6 +184,8 @@ namespace DBConvertToExcel
             System.IO.FileStream file = new System.IO.FileStream(fileName, FileMode.Open, FileAccess.Read);
             return file;
         }
+
+
         #region 属性数据导出excel
         //居民地要素写入excel
         public void CreateJMDExcel(System.Data.DataTable dt, string path)
@@ -529,14 +590,12 @@ namespace DBConvertToExcel
             wzzjcell = wzzjrow.CreateCell(1);
             wzzjcell.SetCellValue("LinkID");
             wzzjcell = wzzjrow.CreateCell(2);
-            wzzjcell.SetCellValue("要素代码");
-            wzzjcell = wzzjrow.CreateCell(3);
             wzzjcell.SetCellValue("要素名称");
-            wzzjcell = wzzjrow.CreateCell(4);
+            wzzjcell = wzzjrow.CreateCell(3);
             wzzjcell.SetCellValue("要素类型");
-            wzzjcell = wzzjrow.CreateCell(5);
+            wzzjcell = wzzjrow.CreateCell(4);
             wzzjcell.SetCellValue("时间");
-            wzzjcell = wzzjrow.CreateCell(6);
+            wzzjcell = wzzjrow.CreateCell(5);
             wzzjcell.SetCellValue("备注");
 
             int j = 1;
@@ -553,14 +612,12 @@ namespace DBConvertToExcel
                     wzzjcell = wzzjrow.CreateCell(1);
                     wzzjcell.SetCellValue(dataRow["LinkID"].ToString());
                     wzzjcell = wzzjrow.CreateCell(2);
-                    wzzjcell.SetCellValue(dataRow["YSDM"].ToString());
-                    wzzjcell = wzzjrow.CreateCell(3);
                     wzzjcell.SetCellValue(dataRow["YSName"].ToString());
-                    wzzjcell = wzzjrow.CreateCell(4);
+                    wzzjcell = wzzjrow.CreateCell(3);
                     wzzjcell.SetCellValue(dataRow["YSType"].ToString());
-                    wzzjcell = wzzjrow.CreateCell(5);
+                    wzzjcell = wzzjrow.CreateCell(4);
                     wzzjcell.SetCellValue(dataRow["ZJTIME"].ToString());
-                    wzzjcell = wzzjrow.CreateCell(6);
+                    wzzjcell = wzzjrow.CreateCell(5);
                     wzzjcell.SetCellValue(dataRow["BZ"].ToString());
                 }
             }
@@ -807,7 +864,7 @@ namespace DBConvertToExcel
 
         }
         #endregion
-        
+
 
         #region  没有用到导出excel
         //居民地导出excel
@@ -1554,9 +1611,9 @@ namespace DBConvertToExcel
 
         #region 空间数据导出为excel
 
-        public void CreateJJMToSHP(System.Data.DataTable dt,string filePath)
+        public void CreateJJMToSHP(System.Data.DataTable dt, string filePath)
         {
-            
+
         }
 
         public void CreateDLToSHP(System.Data.DataTable dt, string filePath)
@@ -1601,7 +1658,7 @@ namespace DBConvertToExcel
             {
                 IFeatureWorkspace pFeatureworkSpace = pWorkspaceFactory.OpenFromFile(fileName, 0) as IFeatureWorkspace;
                 IFeatureClass pFeatureClass = pFeatureworkSpace.CreateFeatureClass(fileName, fields, null, null, esriFeatureType.esriFTSimple, "SHAPE", null);
-               
+
                 ESRI.ArcGIS.Geometry.IPoint point = new ESRI.ArcGIS.Geometry.PointClass();
                 double pointX, pointY;
                 int rows = dt.Rows.Count;
@@ -1611,7 +1668,7 @@ namespace DBConvertToExcel
                     DataRow dataRow = dt.Rows[i - 1];
                     for (int j = 1; j < colums; j++)
                     {
-                        
+
                         pointX = double.Parse(dataRow["x"].ToString());
                         pointY = double.Parse(dataRow["y"].ToString());
                         ESRI.ArcGIS.Geometry.IPoint pPoint = new PointClass();
@@ -1619,7 +1676,7 @@ namespace DBConvertToExcel
                         IFeature pFeature = pFeatureClass.CreateFeature();
                         pFeature.Shape = pPoint;
                         CreateSimpleSymbol(esriGeometryType.esriGeometryPoint);
-                        
+
                     }
                 }
             }
@@ -1631,12 +1688,12 @@ namespace DBConvertToExcel
             {
                 MessageBox.Show("导出成功！");
             }
-            
+
         }
 
         public void CreateWZZJToSHP(System.Data.DataTable dt, string filePath)
         {
-
+            
         }
 
         public void CreateJJXToSHP(System.Data.DataTable dt, string filePath)
@@ -1668,9 +1725,9 @@ namespace DBConvertToExcel
             saveFileDialog.RestoreDirectory = true;
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
-                saveFilePath = saveFileDialog.FileName;
+                saveshpPath = saveFileDialog.FileName;
             }
-            shppath.Text = saveFilePath;
+            shppath.Text = saveshpPath;
         }
 
         public static void createwhatShapefile(esriGeometryType type, IMap map, string filePath, string fileName)
@@ -1747,7 +1804,7 @@ namespace DBConvertToExcel
             return symbol;
         }
         #endregion
-       
+
         #region 颜色
         private ESRI.ArcGIS.Display.IColor getRGB(int i, int j, int k)
         {
@@ -1758,7 +1815,7 @@ namespace DBConvertToExcel
             return rgb;
         }
         #endregion
-        
+
         #region 创建shp文件
         public void CreateSHP(IFeatureClass pInFeatureClass, string pPath)
         {
@@ -1795,10 +1852,11 @@ namespace DBConvertToExcel
         #endregion
 
         #region 创建点要素
-        int index;
-        IFeatureClass pFeatureClass;
-        public IFeatureLayer CreatePointShape(string saveshpPath)
+       
+
+        public void CreatePointShape(System.Data.DataTable dt, string saveshpPath)
         {
+            IFeatureClass pFeatureClass;
             int index = saveshpPath.LastIndexOf('\\');
             string shapeName = saveshpPath.Substring(index + 1);
             string shapeFolder = saveshpPath.Substring(0, index);
@@ -1810,6 +1868,9 @@ namespace DBConvertToExcel
                 IDataset pDataset = (IDataset)featureClass;
                 pDataset.Delete();
             }
+            //创建字段集
+            IFields pFields = new FieldsClass();
+            IFieldsEdit pFieldsEdit = (IFieldsEdit)pFields;
             //创建点要素图层
             IGeometryDef pGeometryDef = new GeometryDefClass();
             IGeometryDefEdit pGeometryDefEdit = (IGeometryDefEdit)pGeometryDef;
@@ -1818,9 +1879,38 @@ namespace DBConvertToExcel
             ISpatialReferenceFactory spatialRerenceFactery = new SpatialReferenceEnvironmentClass();
             ISpatialReference spatialRenferece = spatialRerenceFactery.CreateGeographicCoordinateSystem((int)esriSRGeoCSType.esriSRGeoCS_WGS1984);
             pGeometryDefEdit.SpatialReference_2 = spatialRenferece;
-            
 
+            pFeatureClass = pFeatureworkspace.CreateFeatureClass(shapeName, pFields, null, null, esriFeatureType.esriFTSimple, "Shape", "");
+
+            IFeatureCursor pFeatureCursor = pFeatureClass.Insert(true);
+            IFeatureBuffer pFeatureBuffer = null;
+            pFeatureBuffer = pFeatureClass.CreateFeatureBuffer();
+            int rows = dt.Rows.Count;
+            int cols = dt.Columns.Count;
+            ESRI.ArcGIS.Geometry.IPoint point = new ESRI.ArcGIS.Geometry.PointClass();
+            double pointX, pointY;
+            for (int i = 1; i < rows; i++)
+            {
+                DataRow dataRow = dt.Rows[i - 1];
+                pointX = double.Parse(dataRow["x"].ToString());
+                pointY = double.Parse(dataRow["y"].ToString());
+                ESRI.ArcGIS.Geometry.IPoint pPoint = new PointClass();
+                pPoint.PutCoords(pointX, pointY);
+                IFeature pFeature= pFeatureBuffer as IFeature;
+                pFeature.Shape = pPoint;
+                CreateSimpleSymbol(esriGeometryType.esriGeometryPoint);
+                pFeatureCursor.InsertFeature(pFeatureBuffer);
+            }
+            pFeatureCursor.Flush();
+            IFeatureLayer pFeatureLayer = new FeatureLayerClass();
+            pFeatureLayer.FeatureClass = pFeatureClass;
+            //return pFeatureLayer;
         }
         #endregion
+
+
+
+
+
     }
 }

@@ -38,7 +38,16 @@ namespace DBConvertToExcel
                 var cmd = new SQLiteCommand(sql, conn);
                 SQLiteDataAdapter da = new SQLiteDataAdapter(cmd);
                 DataSet ds = new DataSet();
-                da.Fill(ds);
+                try
+                {
+                    da.Fill(ds);
+                }
+                catch (Exception err)
+                {
+                    string e = err.ToString();
+                    
+                }
+                
                 return ds;
                 
             }
