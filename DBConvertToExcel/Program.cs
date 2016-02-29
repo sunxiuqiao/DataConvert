@@ -22,6 +22,8 @@ namespace DBConvertToExcel
                 return;
             }
 
+            GdalConfiguration.ConfigureGdal();
+
             AoInitialize aoi = new AoInitializeClass();
             esriLicenseProductCode productcode = esriLicenseProductCode.esriLicenseProductCodeEngine;
             if (aoi.IsProductCodeAvailable(productcode) == esriLicenseStatus.esriLicenseAvailable)

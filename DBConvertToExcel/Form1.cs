@@ -25,6 +25,9 @@ using ESRI.ArcGIS.SystemUI;
 using ESRI.ArcGIS.Geoprocessor;
 using ESRI.ArcGIS.DataSourcesGDB;
 using ESRI.ArcGIS.ConversionTools;
+using OSGeo.GDAL;
+using OSGeo.OGR;
+using OSGeo.OSR;
 
 namespace DBConvertToExcel
 {
@@ -34,16 +37,42 @@ namespace DBConvertToExcel
         string openFilePath;
         string saveshpPath;
         string openSpatialPath;
+        public progress progressForm = new progress();
+        private delegate void funHandle(int value);
+        private funHandle myHandle = null;
+        private BackgroundWorker bkWorker = new BackgroundWorker();
+        public addAttributedb attribute = new addAttributedb();
+        public addSpatialdb spatial = new addSpatialdb();
+
+        private delegate bool IncreateHandle(int nValue);
+        private IncreateHandle myInsrease = null;
+        
         //string foldPath;
         public Form1()
         {
-           
+            ///支持中文
+            //Gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "NO");
+            ///属性表支持中文
+            //Gdal.SetConfigOption("SHAPE_ENCODING", "");
+            ///注册装载器
+            //Gdal.AllRegister();
+            //Ogr.RegisterAll()
             InitializeComponent();
+            CheckForIllegalCrossThreadCalls = false;
+
+            bkWorker.WorkerReportsProgress = true;
+            bkWorker.WorkerSupportsCancellation = true;
+            bkWorker.DoWork += new DoWorkEventHandler(DoWork);
+            bkWorker.ProgressChanged += new ProgressChangedEventHandler(ProgessChanged);
+            bkWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(CompleteWork);  
+
 
         }
         //属性数据转换为excel表格
         private void ConverToExcel_Click(object sender, EventArgs e)
         {
+            attribute.ShowDialog();
+            saveFilePath = attribute.FilePath;
             CreateExcel(saveFilePath);
             string sqlstr = @"select * from [JMDData]";
             DataSet jmdds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
@@ -98,11 +127,16 @@ namespace DBConvertToExcel
             {
                 CreateWZZJExcel(wzbzds.Tables[0], saveFilePath);
             }
-            MessageBox.Show("导出成功！");
+           // MessageBox.Show("导出成功！");
+            progressForm.StartPosition = FormStartPosition.CenterParent;
+            bkWorker.RunWorkerAsync();
+            progressForm.ShowDialog();
         }
         //空间数据转换为shp文件
         private void ConvertToshp_Click(object sender, EventArgs e)
         {
+            spatial.ShowDialog();
+            saveshpPath = spatial.SHPPath;
             string sqlstr = @"select * from [JMDData]";
             //DataSet jjdds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
 
@@ -137,9 +171,11 @@ namespace DBConvertToExcel
             DataSet wzzjds = SqliteHelper.ExcelDataSet(sqlstr, openSpatialPath);
             if (saveshpPath != null)
             {
-                CreatePointShape(wzzjds.Tables[0], openSpatialPath);
+                //CreatePointShape(wzzjds.Tables[0], openSpatialPath);
+                CreateWZZJToSHP(wzzjds.Tables[0], saveshpPath);
             }
-            MessageBox.Show("导出成功！");
+            //MessageBox.Show("导出成功！");
+            
         }
         #region 选择db路径
         //选择db文件
@@ -185,7 +221,50 @@ namespace DBConvertToExcel
             return file;
         }
 
+       
+        
+        #region 进度条
+        public void DoWork(object sender, DoWorkEventArgs e)
+        {
+            // 事件处理，指定处理函数  
+            e.Result = ProcessProgress(bkWorker, e);
+        }
 
+        public void ProgessChanged(object sender, System.ComponentModel.ProgressChangedEventArgs e)
+        {
+            // bkWorker.ReportProgress 会调用到这里，此处可以进行自定义报告方式  
+            //progressForm.SetNotifyInfo(e.ProgressPercentage, "处理进度:" + Convert.ToString(e.ProgressPercentage) + "%");
+        }
+
+        public void CompleteWork(object sender, RunWorkerCompletedEventArgs e)
+        {
+            progressForm.Close();
+            MessageBox.Show("导出成功!");
+        }
+
+        private int ProcessProgress(object sender, DoWorkEventArgs e)
+        {
+            for (int i = 0; i <= 500; i++)
+            {
+                if (bkWorker.CancellationPending)
+                {
+                    e.Cancel = true;
+                    return -1;
+                }
+                else
+                {
+                    // 状态报告  
+                    bkWorker.ReportProgress(i / 10);
+
+                    // 等待，用于UI刷新界面，很重要  
+                    System.Threading.Thread.Sleep(1);
+                }
+            }
+
+            return -1;
+        }  
+        #endregion
+        
         #region 属性数据导出excel
         //居民地要素写入excel
         public void CreateJMDExcel(System.Data.DataTable dt, string path)
@@ -1693,7 +1772,45 @@ namespace DBConvertToExcel
 
         public void CreateWZZJToSHP(System.Data.DataTable dt, string filePath)
         {
-            
+            string pszDriveName = "ESRI Shapefile";
+            OSGeo.OGR.Ogr.RegisterAll();
+            OSGeo.OGR.Driver poDriver = OSGeo.OGR.Ogr.GetDriverByName(pszDriveName);
+            if (poDriver == null)
+            {
+                MessageBox.Show("Driver error");
+            }
+            ///创建shp文件
+            OSGeo.OGR.DataSource dataSource;
+            dataSource = poDriver.CreateDataSource(filePath, null);
+            if (dataSource == null)
+            {
+                MessageBox.Show("DataSource Creation Error");
+            }
+            string wkt;
+            OSGeo.OSR.Osr.GetWellKnownGeogCSAsWKT("WGS84",out wkt);
+            OSGeo.OGR.Layer layer = dataSource.CreateLayer("point",new OSGeo.OSR.SpatialReference(wkt),OSGeo.OGR.wkbGeometryType.wkbPoint,null);
+            int rows = dt.Rows.Count;
+            int cols = dt.Columns.Count;
+            double pointX, pointY;
+            int counts = 0;
+            for (int i = 0; i < rows; i++)
+            {
+                DataRow dataRow = dt.Rows[i];
+                pointX = double.Parse(dataRow["x"].ToString());
+                pointY = double.Parse(dataRow["y"].ToString());
+                OSGeo.OGR.Feature feature = new OSGeo.OGR.Feature(layer.GetLayerDefn());
+                OSGeo.OGR.Geometry geometry = new OSGeo.OGR.Geometry(OSGeo.OGR.wkbGeometryType.wkbPoint);
+                geometry.AddPoint(pointX, pointY, 0);
+                feature.SetGeometry(geometry);
+                layer.CreateFeature(feature);
+                counts++;
+            }
+            dataSource.Dispose();
+            //显示进度条
+            progressForm.StartPosition = FormStartPosition.CenterParent;
+            bkWorker.RunWorkerAsync();
+            progressForm.ShowDialog();
+            //MessageBox.Show("导出成功，共导出" + counts + "条数据");
         }
 
         public void CreateJJXToSHP(System.Data.DataTable dt, string filePath)
@@ -1701,35 +1818,6 @@ namespace DBConvertToExcel
 
         }
         #endregion
-
-
-        //选择保存excel路径
-        private void ChooseExcelPath_Click(object sender, EventArgs e)
-        {
-            SaveFileDialog savefileDialog = new SaveFileDialog();
-            savefileDialog.Title = "保存文件";
-            savefileDialog.Filter = "Excel文件（*.xls;*.xlsx)|*.xls;*xlsx|所有文件（*.*)|*.*";
-            savefileDialog.RestoreDirectory = true;
-            if (savefileDialog.ShowDialog() == DialogResult.OK)
-            {
-                saveFilePath = savefileDialog.FileName;
-            }
-            ExcelPath.Text = saveFilePath;
-        }
-        //选择保存的shp文件路径
-        private void ChooseshpPath_Click(object sender, EventArgs e)
-        {
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Title = "保存文件";
-            saveFileDialog.Filter = "SHP文件(.shp)|*.shp|所有文件(*.*)|*.*";
-            saveFileDialog.RestoreDirectory = true;
-            if (saveFileDialog.ShowDialog() == DialogResult.OK)
-            {
-                saveshpPath = saveFileDialog.FileName;
-            }
-            shppath.Text = saveshpPath;
-        }
-
         public static void createwhatShapefile(esriGeometryType type, IMap map, string filePath, string fileName)
         {
             //建立shape字段
@@ -1773,6 +1861,8 @@ namespace DBConvertToExcel
 
             //MessageBox.Show("OK");4 
         }
+
+
         #region 符号设计
         private ISymbol CreateSimpleSymbol(esriGeometryType geometryType)
         {
@@ -1907,6 +1997,8 @@ namespace DBConvertToExcel
             //return pFeatureLayer;
         }
         #endregion
+
+
 
 
 
