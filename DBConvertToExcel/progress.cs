@@ -22,6 +22,8 @@ namespace DBConvertToExcel
         {
             this.label1.Text = message;
             this.progressBar1.Value = percent;
-        }  
+        }
+
+       
     }
 }

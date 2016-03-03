@@ -50,16 +50,15 @@ namespace DBConvertToExcel
         //string foldPath;
         public Form1()
         {
-            ///支持中文
-            //Gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "NO");
-            ///属性表支持中文
-            //Gdal.SetConfigOption("SHAPE_ENCODING", "");
+            //支持中文
+            Gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "NO");
+            //属性表支持中文
+            Gdal.SetConfigOption("SHAPE_ENCODING", "");
             ///注册装载器
             //Gdal.AllRegister();
-            //Ogr.RegisterAll()
+            Ogr.RegisterAll();
             InitializeComponent();
             CheckForIllegalCrossThreadCalls = false;
-
             bkWorker.WorkerReportsProgress = true;
             bkWorker.WorkerSupportsCancellation = true;
             bkWorker.DoWork += new DoWorkEventHandler(DoWork);
@@ -137,46 +136,463 @@ namespace DBConvertToExcel
         {
             spatial.ShowDialog();
             saveshpPath = spatial.SHPPath;
-            string sqlstr = @"select * from [JMDData]";
-            //DataSet jjdds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
-
-            //sqlstr = @"select * from [DLData]";
-            //DataSet dlds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
-
-            //sqlstr = @"select * from [SXData]";
-            //DataSet sxds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
-
-            //sqlstr = @"select * from [GXData]";
-            //DataSet gxds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
-
-            //sqlstr = @"select * from [ZBData]";
-            //DataSet zbds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
-
-            //sqlstr = @"select * from [JJXData]";
-            //DataSet jjxds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
-
-            //sqlstr = @"select * from [DMData]";
-            //DataSet dmds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
-
-            //sqlstr = @"select * from [ZJData]";
-            //DataSet zjds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
-
-            //sqlstr = @"select * from [PZJData]";
-            //DataSet dlzjds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
-
-            //sqlstr = @"select * from [GPSData]";
-            //DataSet gpsds = SqliteHelper.ExcelDataSet(sqlstr, openFilePath);
-
-            sqlstr = @"select * from [WZBZData]";
+            string sqlstr = @"select * from [WZBZData]";
             DataSet wzzjds = SqliteHelper.ExcelDataSet(sqlstr, openSpatialPath);
-            if (saveshpPath != null)
+            if (saveshpPath != null&&wzzjds.Tables[0]!=null)
             {
                 //CreatePointShape(wzzjds.Tables[0], openSpatialPath);
-                CreateWZZJToSHP(wzzjds.Tables[0], saveshpPath);
+                CreatePointshp(wzzjds.Tables[0], saveshpPath);
             }
-            //MessageBox.Show("导出成功！");
+            sqlstr = @"select * from [PZJData]";
+            DataSet dlzjds = SqliteHelper.ExcelDataSet(sqlstr, openSpatialPath);
+            if (saveshpPath != null&&dlzjds.Tables[0]!=null)
+            {
+                CreatePointshp(dlzjds.Tables[0], saveshpPath);
+            }
+
+            //居民地导出
+            string jmdshpname = System.IO.Path.GetFileNameWithoutExtension(saveshpPath);
+            string jmdlextetion = System.IO.Path.GetExtension(saveshpPath);
+            string jmdshppath = System.IO.Path.GetDirectoryName(saveshpPath) + "\\" + "jmd" + jmdshpname + jmdlextetion;
+            CreatePolygon("JMDData", jmdshppath);
+            //道路导出
+            string dlshpname = System.IO.Path.GetFileNameWithoutExtension(saveshpPath);
+            string dlextetion = System.IO.Path.GetExtension(saveshpPath);
+            string dlshppath = System.IO.Path.GetDirectoryName(saveshpPath) + "\\" +"dl"+ dlshpname + dlextetion;
+            SelectFeatureFID("DLData", dlshppath);
+            //植被导出  苗圃行树呢？
+            string zbshpname = System.IO.Path.GetFileNameWithoutExtension(saveshpPath);
+            string zbextetion = System.IO.Path.GetExtension(saveshpPath);
+            string zbshppath = System.IO.Path.GetDirectoryName(saveshpPath) + "\\" + "zb" + zbshpname + zbextetion;
+            SelectFeatureFID("ZBData", zbshppath);
+            //水系导出 
+            string sxshpname = System.IO.Path.GetFileNameWithoutExtension(saveshpPath);
+            string sxextetion = System.IO.Path.GetExtension(saveshpPath);
+            string sxshppath = System.IO.Path.GetDirectoryName(saveshpPath) + "\\" + "sx" + sxshpname + sxextetion;
+            SelectFeatureFID("SXData", sxshppath);
+            //管线导出
+            string gxshpname = System.IO.Path.GetFileNameWithoutExtension(saveshpPath);
+            string gxextetion = System.IO.Path.GetExtension(saveshpPath);
+            string gxshppath = System.IO.Path.GetDirectoryName(saveshpPath) + "\\" + "gx" + gxshpname + gxextetion;
+            SelectFeatureFID("GXData", gxshppath);
+            //境界线路导出
+            string jjxshpname = System.IO.Path.GetFileNameWithoutExtension(saveshpPath);
+            string jjxextetion = System.IO.Path.GetExtension(saveshpPath);
+            string jjxshppath = System.IO.Path.GetDirectoryName(saveshpPath) + "\\" + "jjx" + jjxshpname + jjxextetion;
+            SelectFeatureFID("JJXData", jjxshppath);
+            //土质地貌路导出
+            string dmshpname = System.IO.Path.GetFileNameWithoutExtension(saveshpPath);
+            string dmextetion = System.IO.Path.GetExtension(saveshpPath);
+            string dmshppath = System.IO.Path.GetDirectoryName(saveshpPath) + "\\" + "dm" + dmshpname + dmextetion;
+            CreatePolygon("DMData", dmshppath);
+            //GPS导出
+            string gpsshpname = System.IO.Path.GetFileNameWithoutExtension(saveshpPath);
+            string gpsextetion = System.IO.Path.GetExtension(saveshpPath);
+            string gpsshppath = System.IO.Path.GetDirectoryName(saveshpPath) + "\\" + "gps" + gpsshpname + gpsextetion;
+            SelectFeatureFID("GPSData", gpsshppath);
+            progressForm.StartPosition = FormStartPosition.CenterParent;
+            bkWorker.RunWorkerAsync();
+            progressForm.ShowDialog();
             
         }
+
+        #region 选择不同的fid创建线shp文件
+        public void SelectFeatureFID(string bookName, string filePath)
+        {
+
+            string sql = @"select distinct  LinkAID from " + "[" + bookName + "]";
+            DataSet fiddataset = SqliteHelper.ExcelDataSet(sql, openSpatialPath);
+            List<int> fid = new List<int>();
+            System.Data.DataTable dt = fiddataset.Tables[0];
+            if (dt != null)
+            {
+                int rows = dt.Rows.Count;
+                int FID;
+                string pszDriveName = "ESRI Shapefile";
+                OSGeo.OGR.Ogr.RegisterAll();
+                OSGeo.OGR.Driver poDriver = OSGeo.OGR.Ogr.GetDriverByName(pszDriveName);
+                if (poDriver == null)
+                {
+                    MessageBox.Show("Driver error");
+                }
+                ///创建shp文件
+                OSGeo.OGR.DataSource dataSource;
+                dataSource = poDriver.CreateDataSource(filePath, null);
+                if (dataSource == null)
+                {
+                    MessageBox.Show("DataSource Creation Error");
+                }
+                string wkt;
+                OSGeo.OSR.Osr.GetWellKnownGeogCSAsWKT("WGS84", out wkt);
+                OSGeo.OGR.Layer layer = dataSource.CreateLayer("Polyline", new OSGeo.OSR.SpatialReference(wkt), OSGeo.OGR.wkbGeometryType.wkbLineString, null);
+                FieldDefn ofieldID = new FieldDefn("LinkAID", OSGeo.OGR.FieldType.OFTInteger);
+                layer.CreateField(ofieldID, 0);
+                for (int i = 0; i < rows; i++)
+                {
+                    DataRow dataRow = dt.Rows[i];
+                    FID = Int32.Parse(dataRow["LinkAID"].ToString());
+                    fid.Add(FID);
+                    sql = @"select * from " + "[" + bookName + "]  where LinkAID=" + FID + " order by ID asc ";
+                    DataSet featureidset = SqliteHelper.ExcelDataSet(sql, openSpatialPath);
+
+                    OSGeo.OGR.Feature feature = new OSGeo.OGR.Feature(layer.GetLayerDefn());
+                    OSGeo.OGR.Geometry geometry = new OSGeo.OGR.Geometry(OSGeo.OGR.wkbGeometryType.wkbLineString);
+                    System.Data.DataTable fdt = featureidset.Tables[0];
+                    int frows = fdt.Rows.Count;
+                    double pointX, pointY;
+                    for (int j = 0; j < frows; j++)
+                    {
+                        DataRow fdataRow = fdt.Rows[j];
+                        pointX = double.Parse(fdataRow["x"].ToString());
+                        pointY = double.Parse(fdataRow["y"].ToString());
+                        geometry.AddPoint(pointX, pointY, 0);
+                    }
+                    feature.SetGeometry(geometry);
+                    feature.SetField(0, FID);
+                    layer.CreateFeature(feature);
+                }
+                dataSource.Dispose();
+            }
+            
+        }
+        #endregion
+
+        #region 创建面文件
+        private void CreatePolygon(string bookName,string filePath)
+        {
+            string sql = @"select distinct  LinkAID from " + "[" + bookName + "]";
+            DataSet fiddataset = SqliteHelper.ExcelDataSet(sql, openSpatialPath);
+            List<int> fid = new List<int>();
+            System.Data.DataTable dt = fiddataset.Tables[0];
+            if (dt != null)
+            {
+                int rows = dt.Rows.Count;
+                int FID;
+                string pszDriveName = "ESRI Shapefile";
+                OSGeo.OGR.Ogr.RegisterAll();
+                OSGeo.OGR.Driver poDriver = OSGeo.OGR.Ogr.GetDriverByName(pszDriveName);
+                if (poDriver == null)
+                {
+                    MessageBox.Show("Driver error");
+                }
+                ///创建shp文件
+                OSGeo.OGR.DataSource dataSource;
+                dataSource = poDriver.CreateDataSource(filePath, null);
+                if (dataSource == null)
+                {
+                    MessageBox.Show("DataSource Creation Error");
+                }
+                string wkt;
+                OSGeo.OSR.Osr.GetWellKnownGeogCSAsWKT("WGS84", out wkt);
+                OSGeo.OGR.Layer layer = dataSource.CreateLayer("Polygon", new OSGeo.OSR.SpatialReference(wkt), OSGeo.OGR.wkbGeometryType.wkbPolygon, null);
+                FieldDefn ofieldID = new FieldDefn("LinkAID", OSGeo.OGR.FieldType.OFTInteger);
+                layer.CreateField(ofieldID, 0);
+                for (int i = 0; i < rows; i++)
+                {
+                    DataRow dataRow = dt.Rows[i];
+                    FID = Int32.Parse(dataRow["LinkAID"].ToString());
+                    fid.Add(FID);
+                    sql = @"select * from " + "[" + bookName + "]  where LinkAID=" + FID + " order by ID asc ";
+                    DataSet featureidset = SqliteHelper.ExcelDataSet(sql, openSpatialPath);
+                    OSGeo.OGR.Feature feature = new OSGeo.OGR.Feature(layer.GetLayerDefn());
+                    OSGeo.OGR.Geometry geometry = new OSGeo.OGR.Geometry(OSGeo.OGR.wkbGeometryType.wkbLinearRing);
+                    OSGeo.OGR.Geometry polygon = new OSGeo.OGR.Geometry(OSGeo.OGR.wkbGeometryType.wkbPolygon);
+                    System.Data.DataTable fdt = featureidset.Tables[0];
+                    int frows = fdt.Rows.Count;
+                    double pointX, pointY;
+                    for (int j = 0; j < frows; j++)
+                    {
+                        DataRow fdataRow = fdt.Rows[j];
+                        pointX = double.Parse(fdataRow["x"].ToString());
+                        pointY = double.Parse(fdataRow["y"].ToString());
+                        geometry.AddPoint(pointX, pointY, 0);
+                    }
+                    polygon.AddGeometryDirectly(geometry);
+                    feature.SetGeometry(polygon);
+                    feature.SetField(0, FID);
+                    layer.CreateFeature(feature);
+                }
+                dataSource.Dispose();
+            }
+        }
+       
+        #endregion
+
+        #region 创建水系hp
+        private void CreateZBshp(string bookName, string filePath)
+        {
+            
+            string sql = @"select FTName,LinkID from [SXData]";
+            DataSet attributeset = SqliteHelper.ExcelDataSet(sql, openFilePath);
+            System.Data.DataTable attributedt = attributeset.Tables[0];
+            int linkid;
+            if (attributedt != null)
+            {
+                for(int i=0;i<attributedt.Rows.Count;i++)
+                {
+                    DataRow attribute=attributedt.Rows[i];
+                    string name=attribute["FTName"].ToString();
+                    if (name == "河流"||name=="海岸线")
+                    {
+                        linkid =Int32.Parse( attribute["LinkID"].ToString());
+                        sql = @"select distinct "+linkid+ " from [SXData]";
+                        DataSet fiddataset = SqliteHelper.ExcelDataSet(sql, openSpatialPath);
+                        List<int> fid = new List<int>();
+                        System.Data.DataTable dt = fiddataset.Tables[0];
+                        if (dt != null)
+                        {
+                            int rows = dt.Rows.Count;
+                            int FID;
+                            string pszDriveName = "ESRI Shapefile";
+                            OSGeo.OGR.Ogr.RegisterAll();
+                            OSGeo.OGR.Driver poDriver = OSGeo.OGR.Ogr.GetDriverByName(pszDriveName);
+                            if (poDriver == null)
+                            {
+                                MessageBox.Show("Driver error");
+                            }
+                            string sxshpname = System.IO.Path.GetFileNameWithoutExtension(saveshpPath);
+                            string sxextetion = System.IO.Path.GetExtension(saveshpPath);
+                            string sxshppath = System.IO.Path.GetDirectoryName(saveshpPath) + "\\" + "SXpolyline" + sxshpname + sxextetion;
+                          
+                            ///创建shp文件
+                            OSGeo.OGR.DataSource dataSource;
+                            dataSource = poDriver.CreateDataSource(sxshppath, null);
+                            if (dataSource == null)
+                            {
+                                MessageBox.Show("DataSource Creation Error");
+                            }
+                            string wkt;
+                            OSGeo.OSR.Osr.GetWellKnownGeogCSAsWKT("WGS84", out wkt);
+                            OSGeo.OGR.Layer layer = dataSource.CreateLayer("Polyline", new OSGeo.OSR.SpatialReference(wkt), OSGeo.OGR.wkbGeometryType.wkbLineString, null);
+                            FieldDefn ofieldID = new FieldDefn("LinkAID", OSGeo.OGR.FieldType.OFTInteger);
+                            layer.CreateField(ofieldID, 0);
+                            for (int j = 0; j < rows; j++)
+                            {
+                                DataRow dataRow = dt.Rows[i];
+                                FID = Int32.Parse(dataRow["LinkAID"].ToString());
+                                fid.Add(FID);
+                                sql = @"select * from " + "[" + bookName + "]  where LinkAID=" + FID + " order by ID asc ";
+                                DataSet featureidset = SqliteHelper.ExcelDataSet(sql, openSpatialPath);
+
+                                OSGeo.OGR.Feature feature = new OSGeo.OGR.Feature(layer.GetLayerDefn());
+                                OSGeo.OGR.Geometry geometry = new OSGeo.OGR.Geometry(OSGeo.OGR.wkbGeometryType.wkbLineString);
+                                System.Data.DataTable fdt = featureidset.Tables[0];
+                                int frows = fdt.Rows.Count;
+                                double pointX, pointY;
+                                for (int m = 0; m < frows;m++)
+                                {
+                                    DataRow fdataRow = fdt.Rows[j];
+                                    pointX = double.Parse(fdataRow["x"].ToString());
+                                    pointY = double.Parse(fdataRow["y"].ToString());
+                                    geometry.AddPoint(pointX, pointY, 0);
+                                }
+                                feature.SetGeometry(geometry);
+                                feature.SetField(0, FID);
+                                layer.CreateFeature(feature);
+                            }
+                            dataSource.Dispose();
+                        }
+                        
+
+                    }
+                    if (name == "水源")
+                    {
+                        string pszDriveName = "ESRI Shapefile";
+                        OSGeo.OGR.Ogr.RegisterAll();
+                        OSGeo.OGR.Driver poDriver = OSGeo.OGR.Ogr.GetDriverByName(pszDriveName);
+                        if (poDriver == null)
+                        {
+                            MessageBox.Show("Driver error");
+                        }
+                        string sxshpname = System.IO.Path.GetFileNameWithoutExtension(saveshpPath);
+                        string sxextetion = System.IO.Path.GetExtension(saveshpPath);
+                        string sxshppath = System.IO.Path.GetDirectoryName(saveshpPath) + "\\" + "SXpoint" + sxshpname + sxextetion;
+                        linkid = Int32.Parse(attribute["LinkID"].ToString());
+                        sql = @"select * from " + "[SXData]  where LinkAID=" + linkid + " order by ID asc ";
+                        DataSet fiddataset = SqliteHelper.ExcelDataSet(sql, openSpatialPath);
+
+                        ///创建shp文件
+                        OSGeo.OGR.DataSource dataSource;
+                        dataSource = poDriver.CreateDataSource(sxshppath, null);
+                        if (dataSource == null)
+                        {
+                            MessageBox.Show("DataSource Creation Error");
+                        }
+                        string wkt;
+                        OSGeo.OSR.Osr.GetWellKnownGeogCSAsWKT("WGS84", out wkt);
+                        OSGeo.OGR.Layer layer = dataSource.CreateLayer("point", new OSGeo.OSR.SpatialReference(wkt), OSGeo.OGR.wkbGeometryType.wkbPoint, null);
+                        FieldDefn ofieldID = new FieldDefn("LinkAID", OSGeo.OGR.FieldType.OFTInteger);
+                        layer.CreateField(ofieldID, 0);
+                        System.Data.DataTable dt = fiddataset.Tables[0];
+                        int rows = dt.Rows.Count;
+                        int cols = dt.Columns.Count;
+                        double pointX, pointY;
+                        int counts = 0;
+                        for (int j = 0; j < rows; j++)
+                        {
+                            DataRow dataRow = dt.Rows[i];
+                            pointX = double.Parse(dataRow["x"].ToString());
+                            pointY = double.Parse(dataRow["y"].ToString());
+                            OSGeo.OGR.Feature feature = new OSGeo.OGR.Feature(layer.GetLayerDefn());
+                            OSGeo.OGR.Geometry geometry = new OSGeo.OGR.Geometry(OSGeo.OGR.wkbGeometryType.wkbPoint);
+                            geometry.AddPoint(pointX, pointY, 0);
+                            feature.SetGeometry(geometry);
+                            feature.SetField(0, linkid);
+                            layer.CreateFeature(feature);
+                            counts++;
+                        }
+                        dataSource.Dispose();
+                    }
+                    else
+                    {
+                        string sxshpname = System.IO.Path.GetFileNameWithoutExtension(saveshpPath);
+                        string sxextetion = System.IO.Path.GetExtension(saveshpPath);
+                        string sxshppath = System.IO.Path.GetDirectoryName(saveshpPath) + "\\" + "zbpolygon" + sxshpname + sxextetion;
+                        linkid = Int32.Parse(attribute["LinkID"].ToString());
+                        sql = @"select * from " + "[SXData]  where LinkAID=" + linkid + " order by ID asc ";
+                        DataSet fiddataset = SqliteHelper.ExcelDataSet(sql, openSpatialPath);
+                        List<int> fid = new List<int>();
+                        string pszDriveName = "ESRI Shapefile";
+                        OSGeo.OGR.Ogr.RegisterAll();
+                        OSGeo.OGR.Driver poDriver = OSGeo.OGR.Ogr.GetDriverByName(pszDriveName);
+                        if (poDriver == null)
+                        {
+                            MessageBox.Show("Driver error");
+                        }
+                        ///创建shp文件
+                        OSGeo.OGR.DataSource dataSource;
+
+
+                        dataSource = poDriver.CreateDataSource(sxshppath, null);
+                        if (dataSource == null)
+                        {
+                            MessageBox.Show("DataSource Creation Error");
+                        }
+                        string wkt;
+                        OSGeo.OSR.Osr.GetWellKnownGeogCSAsWKT("WGS84", out wkt);
+                        OSGeo.OGR.Layer layer = dataSource.CreateLayer("Polygon", new OSGeo.OSR.SpatialReference(wkt), OSGeo.OGR.wkbGeometryType.wkbPolygon, null);
+                        FieldDefn ofieldID = new FieldDefn("LinkAID", OSGeo.OGR.FieldType.OFTInteger);
+                        layer.CreateField(ofieldID, 0);
+                        System.Data.DataTable dt = fiddataset.Tables[0];
+                        int rows = dt.Rows.Count;
+                        OSGeo.OGR.Feature feature = new OSGeo.OGR.Feature(layer.GetLayerDefn());
+                        OSGeo.OGR.Geometry geometry = new OSGeo.OGR.Geometry(OSGeo.OGR.wkbGeometryType.wkbLinearRing);
+                        OSGeo.OGR.Geometry polygon = new OSGeo.OGR.Geometry(OSGeo.OGR.wkbGeometryType.wkbPolygon);
+                      
+                        double pointX, pointY;
+                        for (int j = 0; j < rows; j++)
+                        {
+                            DataRow fdataRow = dt.Rows[j];
+                            pointX = double.Parse(fdataRow["x"].ToString());
+                            pointY = double.Parse(fdataRow["y"].ToString());
+                            geometry.AddPoint(pointX, pointY, 0);
+                        }
+                        polygon.AddGeometryDirectly(geometry);
+                        feature.SetGeometry(polygon);
+                        feature.SetField(0, linkid);
+                        layer.CreateFeature(feature);
+                        dataSource.Dispose();
+                    }
+                   
+                }
+                
+            }
+            
+        }
+        #endregion
+
+        #region 创建点文件
+        public void CreatePointshp(System.Data.DataTable dt, string filePath)
+        {
+            string pszDriveName = "ESRI Shapefile";
+            OSGeo.OGR.Ogr.RegisterAll();
+            OSGeo.OGR.Driver poDriver = OSGeo.OGR.Ogr.GetDriverByName(pszDriveName);
+            if (poDriver == null)
+            {
+                MessageBox.Show("Driver error");
+            }
+            ///创建shp文件
+            OSGeo.OGR.DataSource dataSource;
+            dataSource = poDriver.CreateDataSource(filePath, null);
+            if (dataSource == null)
+            {
+                MessageBox.Show("DataSource Creation Error");
+            }
+            string wkt;
+            OSGeo.OSR.Osr.GetWellKnownGeogCSAsWKT("WGS84", out wkt);
+            OSGeo.OGR.Layer layer = dataSource.CreateLayer("point", new OSGeo.OSR.SpatialReference(wkt), OSGeo.OGR.wkbGeometryType.wkbPoint, null);
+            FieldDefn ofieldID = new FieldDefn("LinkAID", OSGeo.OGR.FieldType.OFTInteger);
+            layer.CreateField(ofieldID, 0);
+            int rows = dt.Rows.Count;
+            int cols = dt.Columns.Count;
+            double pointX, pointY;
+            int counts = 0;
+            for (int i = 0; i < rows; i++)
+            {
+                DataRow dataRow = dt.Rows[i];
+                int linkid = Int32.Parse(dataRow["LinkID"].ToString());
+                pointX = double.Parse(dataRow["x"].ToString());
+                pointY = double.Parse(dataRow["y"].ToString());
+                OSGeo.OGR.Feature feature = new OSGeo.OGR.Feature(layer.GetLayerDefn());
+                OSGeo.OGR.Geometry geometry = new OSGeo.OGR.Geometry(OSGeo.OGR.wkbGeometryType.wkbPoint);
+                geometry.AddPoint(pointX, pointY, 0);
+                feature.SetField(0, linkid);
+                feature.SetGeometry(geometry);
+                layer.CreateFeature(feature);
+                counts++;
+            }
+            dataSource.Dispose();
+            //MessageBox.Show("导出成功，共导出" + counts + "条数据");
+        }
+
+      
+        #endregion
+
+        #region 创建GPS路线
+        private void CreateGPSshp(System.Data.DataTable dt,string gpspath)
+        {
+            string pszDriveName = "ESRI Shapefile";
+            OSGeo.OGR.Ogr.RegisterAll();
+            OSGeo.OGR.Driver poDriver = OSGeo.OGR.Ogr.GetDriverByName(pszDriveName);
+            if (poDriver == null)
+            {
+                MessageBox.Show("Driver error");
+            }
+            ///创建shp文件
+            OSGeo.OGR.DataSource dataSource;
+            dataSource = poDriver.CreateDataSource(gpspath, null);
+            if (dataSource == null)
+            {
+                MessageBox.Show("DataSource Creation Error");
+            }
+            string wkt;
+            OSGeo.OSR.Osr.GetWellKnownGeogCSAsWKT("WGS84", out wkt);
+            OSGeo.OGR.Layer layer = dataSource.CreateLayer("gpspolyline", new OSGeo.OSR.SpatialReference(wkt), OSGeo.OGR.wkbGeometryType.wkbPoint, null);
+            FieldDefn ofieldID = new FieldDefn("LinkAID", OSGeo.OGR.FieldType.OFTInteger);
+            layer.CreateField(ofieldID, 0);
+            int rows = dt.Rows.Count;
+            int cols = dt.Columns.Count;
+            double pointX, pointY;
+            OSGeo.OGR.Feature feature = new OSGeo.OGR.Feature(layer.GetLayerDefn());
+            OSGeo.OGR.Geometry geometry = new OSGeo.OGR.Geometry(OSGeo.OGR.wkbGeometryType.wkbPoint);
+            int counts = 0;
+            for (int i = 0; i < rows; i++)
+            {
+                DataRow dataRow = dt.Rows[i];
+                int id = Int32.Parse(dataRow["ID"].ToString());
+                pointX = double.Parse(dataRow["x"].ToString());
+                pointY = double.Parse(dataRow["y"].ToString());
+                geometry.AddPoint(pointX, pointY, 0);
+                feature.SetField(0, counts);
+            }
+            counts++; 
+            feature.SetGeometry(geometry);
+            layer.CreateFeature(feature);
+            dataSource.Dispose();
+        }
+
+        #endregion
+
         #region 选择db路径
         //选择db文件
         private void ChoosePath_Click(object sender, EventArgs e)
@@ -1688,315 +2104,8 @@ namespace DBConvertToExcel
         }
         #endregion
 
-        #region 空间数据导出为excel
-
-        public void CreateJJMToSHP(System.Data.DataTable dt, string filePath)
-        {
-
-        }
-
-        public void CreateDLToSHP(System.Data.DataTable dt, string filePath)
-        {
-
-        }
-
-        public void CreateSXToSHP(System.Data.DataTable dt, string filePath)
-        {
-
-        }
-
-        public void CreateZBToSHP(System.Data.DataTable dt, string filePath)
-        {
-
-        }
-
-        public void CreateGXToSHP(System.Data.DataTable dt, string filePath)
-        {
-
-        }
-
-        public void CreateDMToSHP(System.Data.DataTable dt, string filePath)
-        {
-
-        }
-
-        public void CreateDLZJToSHP(System.Data.DataTable dt, string filePath)
-        {
-            IWorkspaceFactory pWorkspaceFactory = new ShapefileWorkspaceFactory();
-            string graphic = "道路";
-            string fileName = System.IO.Path.Combine(filePath, graphic);
-            if (!System.IO.Directory.Exists(fileName))
-            {
-                System.IO.Directory.CreateDirectory(fileName);
-            }
-            IFields fields = new FieldsClass();
-            //IFieldsEdit fieldsEdit = (IFieldsEdit)fields;
-            //IField field = new FieldClass();
-            //IFieldEdit fieldEidt = new FieldClass();
-            try
-            {
-                IFeatureWorkspace pFeatureworkSpace = pWorkspaceFactory.OpenFromFile(fileName, 0) as IFeatureWorkspace;
-                IFeatureClass pFeatureClass = pFeatureworkSpace.CreateFeatureClass(fileName, fields, null, null, esriFeatureType.esriFTSimple, "SHAPE", null);
-
-                ESRI.ArcGIS.Geometry.IPoint point = new ESRI.ArcGIS.Geometry.PointClass();
-                double pointX, pointY;
-                int rows = dt.Rows.Count;
-                int colums = dt.Columns.Count;
-                for (int i = 1; i < rows; i++)
-                {
-                    DataRow dataRow = dt.Rows[i - 1];
-                    for (int j = 1; j < colums; j++)
-                    {
-
-                        pointX = double.Parse(dataRow["x"].ToString());
-                        pointY = double.Parse(dataRow["y"].ToString());
-                        ESRI.ArcGIS.Geometry.IPoint pPoint = new PointClass();
-                        pPoint.PutCoords(pointX, pointY);
-                        IFeature pFeature = pFeatureClass.CreateFeature();
-                        pFeature.Shape = pPoint;
-                        CreateSimpleSymbol(esriGeometryType.esriGeometryPoint);
-
-                    }
-                }
-            }
-            catch (Exception err)
-            {
-                MessageBox.Show("创建shp文件错误！", err.ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                MessageBox.Show("导出成功！");
-            }
-
-        }
-
-        public void CreateWZZJToSHP(System.Data.DataTable dt, string filePath)
-        {
-            string pszDriveName = "ESRI Shapefile";
-            OSGeo.OGR.Ogr.RegisterAll();
-            OSGeo.OGR.Driver poDriver = OSGeo.OGR.Ogr.GetDriverByName(pszDriveName);
-            if (poDriver == null)
-            {
-                MessageBox.Show("Driver error");
-            }
-            ///创建shp文件
-            OSGeo.OGR.DataSource dataSource;
-            dataSource = poDriver.CreateDataSource(filePath, null);
-            if (dataSource == null)
-            {
-                MessageBox.Show("DataSource Creation Error");
-            }
-            string wkt;
-            OSGeo.OSR.Osr.GetWellKnownGeogCSAsWKT("WGS84",out wkt);
-            OSGeo.OGR.Layer layer = dataSource.CreateLayer("point",new OSGeo.OSR.SpatialReference(wkt),OSGeo.OGR.wkbGeometryType.wkbPoint,null);
-            int rows = dt.Rows.Count;
-            int cols = dt.Columns.Count;
-            double pointX, pointY;
-            int counts = 0;
-            for (int i = 0; i < rows; i++)
-            {
-                DataRow dataRow = dt.Rows[i];
-                pointX = double.Parse(dataRow["x"].ToString());
-                pointY = double.Parse(dataRow["y"].ToString());
-                OSGeo.OGR.Feature feature = new OSGeo.OGR.Feature(layer.GetLayerDefn());
-                OSGeo.OGR.Geometry geometry = new OSGeo.OGR.Geometry(OSGeo.OGR.wkbGeometryType.wkbPoint);
-                geometry.AddPoint(pointX, pointY, 0);
-                feature.SetGeometry(geometry);
-                layer.CreateFeature(feature);
-                counts++;
-            }
-            dataSource.Dispose();
-            //显示进度条
-            progressForm.StartPosition = FormStartPosition.CenterParent;
-            bkWorker.RunWorkerAsync();
-            progressForm.ShowDialog();
-            //MessageBox.Show("导出成功，共导出" + counts + "条数据");
-        }
-
-        public void CreateJJXToSHP(System.Data.DataTable dt, string filePath)
-        {
-
-        }
-        #endregion
-        public static void createwhatShapefile(esriGeometryType type, IMap map, string filePath, string fileName)
-        {
-            //建立shape字段
-            IFields pFields = new FieldsClass();
-            IFieldsEdit pFieldsEdit = pFields as IFieldsEdit;
-            IField pField = new FieldClass();
-            IFieldEdit pFieldEdit = pField as IFieldEdit;
-            pFieldEdit.Name_2 = "Shape";
-            pFieldEdit.Type_2 = esriFieldType.esriFieldTypeGeometry;
-
-            //设置geometry definition
-            IGeometryDef pGeometryDef = new GeometryDefClass();
-            IGeometryDefEdit pGeometryDefEdit = pGeometryDef as IGeometryDefEdit;
-            pGeometryDefEdit.GeometryType_2 = type;
-            pGeometryDefEdit.SpatialReference_2 = map.SpatialReference;
-            pFieldEdit.GeometryDef_2 = pGeometryDef;
-            pFieldsEdit.AddField(pField);
-
-            //新建字段
-            pField = new FieldClass();
-            pFieldEdit = pField as IFieldEdit;
-            pFieldEdit.Length_2 = 10;
-            pFieldEdit.Name_2 = "OBJECTID";
-            pFieldEdit.AliasName_2 = "ID";
-            pFieldEdit.Type_2 = esriFieldType.esriFieldTypeDouble;
-            pFieldsEdit.AddField(pField);
-            //其他字段用循环新建
-
-
-            IWorkspaceFactory pWorkspaceFactory = new ShapefileWorkspaceFactory();
-            IWorkspace pWorkspace = pWorkspaceFactory.OpenFromFile(filePath, 0);
-            IFeatureWorkspace pFeatureWorkspace = pWorkspace as IFeatureWorkspace;
-            //IWorkspaceFactory pWorkspaceFactory = new FileGDBWorkspaceFactoryClass();
-            //IFeatureWorkspace pFeatureWorkspace = pWorkspaceFactory.OpenFromFile(filePath, 0) as IFeatureWorkspace;
-
-            int i = fileName.IndexOf(".shp");
-            if (i == -1)
-                pFeatureWorkspace.CreateFeatureClass(fileName + ".shp", pFields, null, null, esriFeatureType.esriFTSimple, "Shape", "");
-            else
-                pFeatureWorkspace.CreateFeatureClass(fileName, pFields, null, null, esriFeatureType.esriFTSimple, "Shape", "");
-
-            //MessageBox.Show("OK");4 
-        }
-
-
-        #region 符号设计
-        private ISymbol CreateSimpleSymbol(esriGeometryType geometryType)
-        {
-            ISymbol symbol = null;
-            switch (geometryType)
-            {
-                case esriGeometryType.esriGeometryPoint:
-                case esriGeometryType.esriGeometryMultipoint:
-                    ISimpleMarkerSymbol markerSymbol = new SimpleMarkerSymbolClass();
-                    markerSymbol.Color = getRGB(0, 0, 255);
-                    markerSymbol.Size = 10;
-                    symbol = markerSymbol as ISymbol;
-                    break;
-                case esriGeometryType.esriGeometryPolyline:
-                case esriGeometryType.esriGeometryPath:
-                    ISimpleLineSymbol lineSymbol = new SimpleLineSymbolClass();
-                    lineSymbol.Color = getRGB(0, 0, 255);
-                    lineSymbol.Width = 10;
-                    symbol = lineSymbol as ISymbol;
-                    break;
-                case esriGeometryType.esriGeometryPolygon:
-                case esriGeometryType.esriGeometryRing:
-                    ISimpleFillSymbol fillSymbol = new SimpleFillSymbolClass();
-                    fillSymbol.Color = getRGB(0, 0, 255);
-                    symbol = fillSymbol as ISymbol;
-                    break;
-            }
-            symbol.ROP2 = esriRasterOpCode.esriROPNotXOrPen;
-            return symbol;
-        }
-        #endregion
-
-        #region 颜色
-        private ESRI.ArcGIS.Display.IColor getRGB(int i, int j, int k)
-        {
-            IRgbColor rgb = new RgbColorClass();
-            rgb.Red = i;
-            rgb.Green = j;
-            rgb.Blue = k;
-            return rgb;
-        }
-        #endregion
-
-        #region 创建shp文件
-        public void CreateSHP(IFeatureClass pInFeatureClass, string pPath)
-        {
-            // create a new Access workspace factory        
-            IWorkspaceFactory pWorkspaceFactory = new ShapefileWorkspaceFactoryClass();
-            string parentPath = pPath.Substring(0, pPath.LastIndexOf('\\'));
-            string fileName = pPath.Substring(pPath.LastIndexOf('\\') + 1, pPath.Length - pPath.LastIndexOf('\\') - 1);
-            IWorkspaceName pWorkspaceName = pWorkspaceFactory.Create(parentPath, fileName, null, 0);
-            // Cast for IName        
-            ESRI.ArcGIS.esriSystem.IName name = (ESRI.ArcGIS.esriSystem.IName)pWorkspaceName;
-            //Open a reference to the access workspace through the name object        
-            IWorkspace pOutWorkspace = (IWorkspace)name.Open();
-
-            IDataset pInDataset = pInFeatureClass as IDataset;
-            IFeatureClassName pInFCName = pInDataset.FullName as IFeatureClassName;
-            IWorkspace pInWorkspace = pInDataset.Workspace;
-            IDataset pOutDataset = pOutWorkspace as IDataset;
-            IWorkspaceName pOutWorkspaceName = pOutDataset.FullName as IWorkspaceName;
-            IFeatureClassName pOutFCName = new FeatureClassNameClass();
-            IDatasetName pDatasetName = pOutFCName as IDatasetName;
-            pDatasetName.WorkspaceName = pOutWorkspaceName;
-            pDatasetName.Name = pInFeatureClass.AliasName;
-            IFieldChecker pFieldChecker = new FieldCheckerClass();
-            pFieldChecker.InputWorkspace = pInWorkspace;
-            pFieldChecker.ValidateWorkspace = pOutWorkspace;
-            IFields pFields = pInFeatureClass.Fields;
-            IFields pOutFields;
-            IEnumFieldError pEnumFieldError;
-            pFieldChecker.Validate(pFields, out pEnumFieldError, out pOutFields);
-
-            IFeatureDataConverter pFeatureDataConverter = new FeatureDataConverterClass();
-            pFeatureDataConverter.ConvertFeatureClass(pInFCName, null, null, pOutFCName, null, pOutFields, "", 1000, 0);
-        }
-        #endregion
-
-        #region 创建点要素
-       
-
-        public void CreatePointShape(System.Data.DataTable dt, string saveshpPath)
-        {
-            IFeatureClass pFeatureClass;
-            int index = saveshpPath.LastIndexOf('\\');
-            string shapeName = saveshpPath.Substring(index + 1);
-            string shapeFolder = saveshpPath.Substring(0, index);
-            IWorkspaceFactory pWorkspaceFactory = new ShapefileWorkspaceFactoryClass();
-            IFeatureWorkspace pFeatureworkspace = (IFeatureWorkspace)pWorkspaceFactory.OpenFromFile(shapeFolder, 0);
-            if (File.Exists(saveshpPath))
-            {
-                IFeatureClass featureClass = pFeatureworkspace.OpenFeatureClass(shapeName);
-                IDataset pDataset = (IDataset)featureClass;
-                pDataset.Delete();
-            }
-            //创建字段集
-            IFields pFields = new FieldsClass();
-            IFieldsEdit pFieldsEdit = (IFieldsEdit)pFields;
-            //创建点要素图层
-            IGeometryDef pGeometryDef = new GeometryDefClass();
-            IGeometryDefEdit pGeometryDefEdit = (IGeometryDefEdit)pGeometryDef;
-            pGeometryDefEdit.GeometryType_2 = esriGeometryType.esriGeometryPoint;
-            //创建地理坐标系对象
-            ISpatialReferenceFactory spatialRerenceFactery = new SpatialReferenceEnvironmentClass();
-            ISpatialReference spatialRenferece = spatialRerenceFactery.CreateGeographicCoordinateSystem((int)esriSRGeoCSType.esriSRGeoCS_WGS1984);
-            pGeometryDefEdit.SpatialReference_2 = spatialRenferece;
-
-            pFeatureClass = pFeatureworkspace.CreateFeatureClass(shapeName, pFields, null, null, esriFeatureType.esriFTSimple, "Shape", "");
-
-            IFeatureCursor pFeatureCursor = pFeatureClass.Insert(true);
-            IFeatureBuffer pFeatureBuffer = null;
-            pFeatureBuffer = pFeatureClass.CreateFeatureBuffer();
-            int rows = dt.Rows.Count;
-            int cols = dt.Columns.Count;
-            ESRI.ArcGIS.Geometry.IPoint point = new ESRI.ArcGIS.Geometry.PointClass();
-            double pointX, pointY;
-            for (int i = 1; i < rows; i++)
-            {
-                DataRow dataRow = dt.Rows[i - 1];
-                pointX = double.Parse(dataRow["x"].ToString());
-                pointY = double.Parse(dataRow["y"].ToString());
-                ESRI.ArcGIS.Geometry.IPoint pPoint = new PointClass();
-                pPoint.PutCoords(pointX, pointY);
-                IFeature pFeature= pFeatureBuffer as IFeature;
-                pFeature.Shape = pPoint;
-                CreateSimpleSymbol(esriGeometryType.esriGeometryPoint);
-                pFeatureCursor.InsertFeature(pFeatureBuffer);
-            }
-            pFeatureCursor.Flush();
-            IFeatureLayer pFeatureLayer = new FeatureLayerClass();
-            pFeatureLayer.FeatureClass = pFeatureClass;
-            //return pFeatureLayer;
-        }
-        #endregion
+        
+        
 
 
 

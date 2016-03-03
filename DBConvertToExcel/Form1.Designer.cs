@@ -76,7 +76,7 @@
             // 
             // ConvertToshp
             // 
-            this.ConvertToshp.Location = new System.Drawing.Point(350, 116);
+            this.ConvertToshp.Location = new System.Drawing.Point(362, 116);
             this.ConvertToshp.Name = "ConvertToshp";
             this.ConvertToshp.Size = new System.Drawing.Size(75, 23);
             this.ConvertToshp.TabIndex = 10;
