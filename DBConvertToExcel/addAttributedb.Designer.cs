@@ -58,7 +58,7 @@
             this.Controls.Add(this.button1);
             this.Controls.Add(this.textBox1);
             this.Name = "addAttributedb";
-            this.Text = "属性数据库路径";
+            this.Text = "excel保存路径";
             this.ResumeLayout(false);
             this.PerformLayout();
 

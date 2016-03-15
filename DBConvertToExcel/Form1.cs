@@ -144,10 +144,13 @@ namespace DBConvertToExcel
                 CreatePointshp(wzzjds.Tables[0], saveshpPath);
             }
             sqlstr = @"select * from [PZJData]";
-            DataSet dlzjds = SqliteHelper.ExcelDataSet(sqlstr, openSpatialPath);
-            if (saveshpPath != null&&dlzjds.Tables[0]!=null)
+            DataSet pzjds = SqliteHelper.ExcelDataSet(sqlstr, openSpatialPath);
+            string pzjshpname = System.IO.Path.GetFileNameWithoutExtension(saveshpPath);
+            string pzjlextetion = System.IO.Path.GetExtension(saveshpPath);
+            string pzjshppath = System.IO.Path.GetDirectoryName(saveshpPath) + "\\" + "pzj" + pzjshpname + pzjlextetion;
+            if (saveshpPath != null && pzjds.Tables[0] != null)
             {
-                CreatePointshp(dlzjds.Tables[0], saveshpPath);
+                CreatePointshp(pzjds.Tables[0], pzjshppath);
             }
 
             //居民地导出
@@ -169,7 +172,8 @@ namespace DBConvertToExcel
             string sxshpname = System.IO.Path.GetFileNameWithoutExtension(saveshpPath);
             string sxextetion = System.IO.Path.GetExtension(saveshpPath);
             string sxshppath = System.IO.Path.GetDirectoryName(saveshpPath) + "\\" + "sx" + sxshpname + sxextetion;
-            SelectFeatureFID("SXData", sxshppath);
+            CreateSXshp("SXData", sxshppath);
+            ///SelectFeatureFID("SXData", sxshppath);
             //管线导出
             string gxshpname = System.IO.Path.GetFileNameWithoutExtension(saveshpPath);
             string gxextetion = System.IO.Path.GetExtension(saveshpPath);
@@ -189,7 +193,12 @@ namespace DBConvertToExcel
             string gpsshpname = System.IO.Path.GetFileNameWithoutExtension(saveshpPath);
             string gpsextetion = System.IO.Path.GetExtension(saveshpPath);
             string gpsshppath = System.IO.Path.GetDirectoryName(saveshpPath) + "\\" + "gps" + gpsshpname + gpsextetion;
-            SelectFeatureFID("GPSData", gpsshppath);
+            sqlstr = @"select * from [GPSData]";
+            DataSet gpsds = SqliteHelper.ExcelDataSet(sqlstr, openSpatialPath);
+            if(gpsshppath!=null&&gpsds.Tables[0]!=null){
+                CreateGPSshp(gpsds.Tables[0], gpsshppath);
+            }          
+            //SelectFeatureFID("GPSData", gpsshppath);
             progressForm.StartPosition = FormStartPosition.CenterParent;
             bkWorker.RunWorkerAsync();
             progressForm.ShowDialog();
@@ -319,7 +328,7 @@ namespace DBConvertToExcel
         #endregion
 
         #region 创建水系hp
-        private void CreateZBshp(string bookName, string filePath)
+        private void CreateSXshp(string bookName, string filePath)
         {
             
             string sql = @"select FTName,LinkID from [SXData]";
@@ -527,21 +536,29 @@ namespace DBConvertToExcel
             int cols = dt.Columns.Count;
             double pointX, pointY;
             int counts = 0;
-            for (int i = 0; i < rows; i++)
+            if (rows < 2)
             {
-                DataRow dataRow = dt.Rows[i];
-                int linkid = Int32.Parse(dataRow["LinkID"].ToString());
-                pointX = double.Parse(dataRow["x"].ToString());
-                pointY = double.Parse(dataRow["y"].ToString());
-                OSGeo.OGR.Feature feature = new OSGeo.OGR.Feature(layer.GetLayerDefn());
-                OSGeo.OGR.Geometry geometry = new OSGeo.OGR.Geometry(OSGeo.OGR.wkbGeometryType.wkbPoint);
-                geometry.AddPoint(pointX, pointY, 0);
-                feature.SetField(0, linkid);
-                feature.SetGeometry(geometry);
-                layer.CreateFeature(feature);
-                counts++;
+                return;
             }
-            dataSource.Dispose();
+            else
+            {
+                for (int i = 0; i < rows; i++)
+                {
+                    DataRow dataRow = dt.Rows[i];
+                    int linkid = Int32.Parse(dataRow["LinkID"].ToString());
+                    pointX = double.Parse(dataRow["x"].ToString());
+                    pointY = double.Parse(dataRow["y"].ToString());
+                    OSGeo.OGR.Feature feature = new OSGeo.OGR.Feature(layer.GetLayerDefn());
+                    OSGeo.OGR.Geometry geometry = new OSGeo.OGR.Geometry(OSGeo.OGR.wkbGeometryType.wkbPoint);
+                    geometry.AddPoint(pointX, pointY, 0);
+                    feature.SetField(0, linkid);
+                    feature.SetGeometry(geometry);
+                    layer.CreateFeature(feature);
+                    counts++;
+                }
+                dataSource.Dispose();
+            }
+            
             //MessageBox.Show("导出成功，共导出" + counts + "条数据");
         }
 

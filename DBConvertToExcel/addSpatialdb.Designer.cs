@@ -58,7 +58,7 @@
             this.Controls.Add(this.button1);
             this.Controls.Add(this.textBox1);
             this.Name = "addSpatialdb";
-            this.Text = "空间数据库路径";
+            this.Text = ".shp保存路径";
             this.ResumeLayout(false);
             this.PerformLayout();
 

@@ -124,7 +124,7 @@
             this.Controls.Add(this.AttributePath);
             this.Controls.Add(this.label1);
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "数据拼接";
             this.ResumeLayout(false);
             this.PerformLayout();
 
